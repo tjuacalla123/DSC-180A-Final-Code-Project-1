@@ -1,9 +1,9 @@
 # DSC 180A Project 1 Code 
 Group Members:
-Frans Timothy Juacalla
-Andrew Canonigo
-Martin Thai
-Aryaman Sinha
+Frans Timothy Juacalla,
+Andrew Canonigo,
+Martin Thai,
+Aryaman Sinha,
 
 This code was adapted and modified from the Pre-standard Codebase of the DP3T SDK for Android.
 https://github.com/DP-3T/dp3t-sdk-android/releases/tag/prestandard
