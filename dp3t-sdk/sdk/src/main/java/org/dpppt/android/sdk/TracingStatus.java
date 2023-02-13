@@ -14,8 +14,8 @@ import java.util.Collection;
 
 
 public class TracingStatus {
+	// TODO: Remove this 'contacts'
 
-	private int numberOfContacts;
 	private boolean advertising;
 	private boolean receiving;
 	private long lastSyncDate;
@@ -23,9 +23,8 @@ public class TracingStatus {
 
 	private Collection<ErrorState> errors;
 
-	public TracingStatus(int numberOfContacts, boolean advertising, boolean receiving,
+	public TracingStatus(boolean advertising, boolean receiving,
 			long lastSyncDate, Collection<ErrorState> errors) {
-		this.numberOfContacts = numberOfContacts;
 		this.advertising = advertising;
 		this.receiving = receiving;
 		this.lastSyncDate = lastSyncDate;

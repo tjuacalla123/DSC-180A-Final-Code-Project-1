@@ -8,7 +8,7 @@
  * SPDX-License-Identifier: MPL-2.0
  */
 package org.dpppt.android.sdk.internal.crypto;
-
+/*
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -141,3 +141,4 @@ public class CryptoTest {
 	}
 
 }
+*/

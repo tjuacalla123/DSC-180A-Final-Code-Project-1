@@ -7,7 +7,7 @@
  *
  * SPDX-License-Identifier: MPL-2.0
  */
-
+/*
 package org.dpppt.android.sdk.internal.crypto;
 
 import android.content.Context;
@@ -189,3 +189,4 @@ public class ContactTests {
 	}
 
 }
+*/

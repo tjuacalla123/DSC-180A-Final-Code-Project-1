@@ -33,8 +33,6 @@ public class Messaging {
 
 	public static void init(Context context, String appId, PublicKey signaturePublicKey) {
 		if (ProcessUtil.isMainProcess(context)) {
-
-
 			Messaging.appId = appId;
 			executeInit(context, signaturePublicKey);
 		}
@@ -43,10 +41,7 @@ public class Messaging {
 
 	private static void executeInit(Context context, PublicKey signaturePublicKey) {
 		CryptoModule.getInstance(context).init();
-
 		new Database(context).removeOldData();
-
-
 		AppConfigManager appConfigManager = AppConfigManager.getInstance(context);
 		boolean advertising = appConfigManager.isAdvertisingEnabled();
 		boolean receiving = appConfigManager.isReceivingEnabled();
@@ -86,8 +81,8 @@ public class Messaging {
 		Database database = new Database(context);
 		AppConfigManager appConfigManager = AppConfigManager.getInstance(context);
 		Collection<TracingStatus.ErrorState> errorStates = ErrorHelper.checkTracingErrorStatus(context);
+		// TODO: Remove contacts
 		return new TracingStatus(
-				database.getContacts().size(),
 				appConfigManager.isAdvertisingEnabled(),
 				appConfigManager.isReceivingEnabled(),
 				appConfigManager.getLastSyncDate(),

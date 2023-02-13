@@ -14,11 +14,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import androidx.annotation.NonNull;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-
 class DatabaseOpenHelper extends SQLiteOpenHelper {
 
 	private static final int DATABASE_VERSION = 1;
@@ -54,28 +49,9 @@ class DatabaseOpenHelper extends SQLiteOpenHelper {
 
 	public void recreateTables(@NonNull SQLiteDatabase db) {
 		new Transaction(db,
-				Contacts.drop(),
-				KnownCases.drop(),
 				Handshakes.drop(),
-				ExposureDays.drop(),
-				KnownCases.create(),
-				Handshakes.create(),
-				Contacts.create(),
-				ExposureDays.create()
+				Handshakes.create()
 		).run();
-	}
-
-
-	public void exportDatabaseTo(Context context, OutputStream targetOut) throws IOException {
-		File db = context.getDatabasePath(DATABASE_NAME);
-		FileInputStream fileInputStream = new FileInputStream(db);
-		byte[] buf = new byte[2048];
-		int len;
-		while ((len = fileInputStream.read(buf)) > 0) {
-			targetOut.write(buf, 0, len);
-		}
-		targetOut.close();
-		fileInputStream.close();
 	}
 
 }

@@ -98,4 +98,7 @@ public class AppConfigManager {
 		sharedPrefs.edit().clear().apply();
 	}
 
+	// TODO: use sharedpref to store seed/sk (only using 1 now,
+	//  no need to generate seed each day as of February 1)
+
 }

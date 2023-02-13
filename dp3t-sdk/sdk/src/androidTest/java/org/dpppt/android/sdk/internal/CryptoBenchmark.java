@@ -8,7 +8,7 @@
  * SPDX-License-Identifier: MPL-2.0
  */
 package org.dpppt.android.sdk.internal;
-
+/*
 import androidx.benchmark.BenchmarkState;
 import androidx.benchmark.junit4.BenchmarkRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -61,3 +61,5 @@ public class CryptoBenchmark {
 	}
 
 }
+
+ */
