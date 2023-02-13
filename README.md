@@ -1,4 +1,4 @@
-# DSC 180A Project 1 Code 
+# DSC 180A Project Code 
 Group Members:
 Frans Timothy Juacalla,
 Andrew Canonigo,
