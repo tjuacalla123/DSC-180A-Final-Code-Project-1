@@ -40,7 +40,8 @@ public class Messaging {
 
 
 	private static void executeInit(Context context, PublicKey signaturePublicKey) {
-		CryptoModule.getInstance(context).init();
+		//TODO: Reverse comment if needed
+		//CryptoModule.getInstance(context).init();
 		new Database(context).removeOldData();
 		AppConfigManager appConfigManager = AppConfigManager.getInstance(context);
 		boolean advertising = appConfigManager.isAdvertisingEnabled();
@@ -112,8 +113,8 @@ public class Messaging {
 		if (appConfigManager.isAdvertisingEnabled() || appConfigManager.isReceivingEnabled()) {
 			throw new IllegalStateException("Tracking must be stopped for clearing the local data");
 		}
-
-		CryptoModule.getInstance(context).reset();
+		//TODO: Reverse comment if needed
+		//CryptoModule.getInstance(context).reset();
 		appConfigManager.clearPreferences();
 		Logger.clear();
 		Database db = new Database(context);

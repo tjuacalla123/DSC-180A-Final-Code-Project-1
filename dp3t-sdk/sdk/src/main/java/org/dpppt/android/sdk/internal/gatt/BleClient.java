@@ -21,6 +21,7 @@ import android.os.Build;
 import android.os.ParcelUuid;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,7 @@ import org.dpppt.android.sdk.internal.database.models.Handshake;
 import org.dpppt.android.sdk.internal.logger.Logger;
 
 import static org.dpppt.android.sdk.internal.gatt.BleServer.SERVICE_UUID;
+//import static org.dpppt.android.sdk.internal.gatt.BleServer.SERVICE_UUID2;
 
 public class BleClient {
 
@@ -50,8 +52,8 @@ public class BleClient {
 	// constructor
 	public BleClient(Context context) {
 		this.context = context;
-		gattConnectionThread = new GattConnectionThread();
-		gattConnectionThread.start();
+		//gattConnectionThread = new GattConnectionThread();
+		//gattConnectionThread.start();
 	}
 
 	public BluetoothState start() {
@@ -144,25 +146,23 @@ public class BleClient {
 				scanResultMap.put(deviceAddr, handshakesForDevice);
 			}
 			// get the EphId payload
+
 			byte[] payload = scanResult.getScanRecord().getServiceData(new ParcelUuid(SERVICE_UUID));
-			boolean correctPayload = payload != null && payload.length == CryptoModule.EPHID_LENGTH;
+			boolean correctPayload = payload != null;
 			Logger.d(TAG, "found " + deviceAddr + "; power: " + power + "; rssi: " + scanResult.getRssi() +
 					"; haspayload: " + correctPayload);
-			if (correctPayload) {
+			if (payload != null) {
+
+				byte[] ephID = Arrays.copyOfRange(payload, 0, 8);
+				byte[] zip_byte = Arrays.copyOfRange(payload, 8, payload.length);
+				String zip = new String(zip_byte, "UTF-8");
+				System.out.println(zip);
+				System.out.println(ephID);
 				// if Android, optimize (meaning: send/read payload directly in the advertisement
 				Logger.i(TAG, "handshake with " + deviceAddr + " (servicedata payload)");
 				handshakesForDevice.add(createHandshake(new EphId(payload), scanResult, power));
-			} else {
-				if (handshakesForDevice.isEmpty()) {
-					//enter gatt server
-					gattConnectionThread.addTask(new GattConnectionTask(context, bluetoothDevice, scanResult,
-							(ephId, device) -> {
-								connectedEphIdMap.put(device.getAddress(), ephId);
-								Logger.i(TAG, "handshake with " + device.getAddress() + " (gatt connection)");
-							}));
-				}
-				handshakesForDevice.add(createHandshake(null, scanResult, power));
 			}
+
 		} catch (Exception e) {
 			Logger.e(TAG, e);
 		}
@@ -189,7 +189,7 @@ public class BleClient {
 	}
 
 	public synchronized void stop() {
-		gattConnectionThread.terminate();
+		//gattConnectionThread.terminate();
 		stopScan();
 
 		Database database = new Database(context);

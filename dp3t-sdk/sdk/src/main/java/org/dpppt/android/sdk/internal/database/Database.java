@@ -43,7 +43,7 @@ public class Database {
 	public void removeOldData() {
 		databaseThread.post(() -> {
 			SQLiteDatabase db = databaseOpenHelper.getWritableDatabase();
-			DayDate lastDayToKeep = new DayDate().subtractDays(CryptoModule.NUMBER_OF_DAYS_TO_KEEP_DATA);
+			DayDate lastDayToKeep = new DayDate().subtractDays(21);
 		});
 	}
 

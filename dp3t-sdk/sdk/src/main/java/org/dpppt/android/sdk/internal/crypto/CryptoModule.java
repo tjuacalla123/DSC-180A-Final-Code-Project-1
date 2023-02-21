@@ -132,10 +132,10 @@ public class CryptoModule {
 		return SKList.get(0).second;
 	}
 
-	protected List<EphId> createEphIds(byte[] SK, boolean shuffle) {
+	protected List<EphId> createEphIds(byte[] SK , boolean shuffle) {
 		try {
 			Mac mac = Mac.getInstance("HmacSHA256");
-			mac.init(new SecretKeySpec(SK, "HmacSHA256"));
+			mac.init(new SecretKeySpec(new byte[]{0x01, 0x02, 0x03}, "HmacSHA256"));
 			mac.update(BROADCAST_KEY);
 			byte[] prf = mac.doFinal();
 

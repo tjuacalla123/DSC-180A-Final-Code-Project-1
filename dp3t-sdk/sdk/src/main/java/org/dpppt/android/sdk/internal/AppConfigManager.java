@@ -98,6 +98,12 @@ public class AppConfigManager {
 		sharedPrefs.edit().clear().apply();
 	}
 
+	public String zippy = "lmao";
+	public void setZip(String zip) {
+		this.zippy = zip;
+	}
+
+
 	// TODO: use sharedpref to store seed/sk (only using 1 now,
 	//  no need to generate seed each day as of February 1)
 

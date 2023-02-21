@@ -10,10 +10,18 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.ParcelUuid;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.UUID;
 
 import org.dpppt.android.sdk.internal.AppConfigManager;
 import org.dpppt.android.sdk.internal.crypto.CryptoModule;
+import org.dpppt.android.sdk.internal.crypto.EphId;
+import org.dpppt.android.sdk.internal.crypto.EphemeralIdGenerator;
 import org.dpppt.android.sdk.internal.logger.Logger;
 
 public class BleServer {
@@ -21,8 +29,10 @@ public class BleServer {
 	private static final String TAG = "BleServer";
 
 	private static final String DP3T_16_BIT_UUID = "FD68";
+
 	// For scanning other bluetooth devices with same UUID
 	public static final UUID SERVICE_UUID = UUID.fromString("0000" + DP3T_16_BIT_UUID + "-0000-1000-8000-00805F9B34FB");
+	//public static final UUID SERVICE_UUID2 = UUID.fromString("0000180A-0000-1000-8000-00805F9B34FB");
 	// For gatt characteristic
 	public static final UUID TOTP_CHARACTERISTIC_UUID = UUID.fromString("8c8494e3-bab5-1848-40a0-1b06991c0001");
 
@@ -50,22 +60,12 @@ public class BleServer {
 	}
 
 	private byte[] getAdvertiseData() {
-		CryptoModule cryptoModule = CryptoModule.getInstance(context);
+		//CryptoModule cryptoModule = CryptoModule.getInstance(context);
 		// Get current EphId based on epoch
-		byte[] advertiseData = cryptoModule.getCurrentEphId().getData();
-		String calibrationTestDeviceName = AppConfigManager.getInstance(context).getCalibrationTestDeviceName();
-		if (calibrationTestDeviceName != null) {
-			byte[] nameBytes = calibrationTestDeviceName.getBytes();
-			for (int i = 0; i < AppConfigManager.CALIBRATION_TEST_DEVICE_NAME_LENGTH; i++) {
-				advertiseData[i] = nameBytes[i];
-			}
-			long curMinInEpoch = ((System.currentTimeMillis() - cryptoModule.getCurrentEpochStart()) / (60 * 1000));
-			byte[] minData = Long.toString(curMinInEpoch).getBytes();
-			advertiseData[AppConfigManager.CALIBRATION_TEST_DEVICE_NAME_LENGTH] = minData[0];
-			if (minData.length > 1) {
-				advertiseData[AppConfigManager.CALIBRATION_TEST_DEVICE_NAME_LENGTH + 1] = minData[1];
-			}
-		}
+
+		byte[] advertiseData = EphemeralIdGenerator.generateEphemeralId("Tim");
+		//byte[] advertiseData = cryptoModule.getCurrentEphId().getData();
+
 		return advertiseData;
 	}
 
@@ -98,8 +98,23 @@ public class BleServer {
 		advBuilder.setIncludeDeviceName(false);
 		advBuilder.addServiceUuid(new ParcelUuid(SERVICE_UUID));
 
+		AppConfigManager appConfigManager = AppConfigManager.getInstance(context);
+		String zipcoders = appConfigManager.zippy;
+		byte[] byte_zip = zipcoders.getBytes(StandardCharsets.UTF_8);
+
+
+		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+		try {
+			outputStream.write(getAdvertiseData());
+			outputStream.write(byte_zip);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		byte[] c = outputStream.toByteArray();
+
 		// binding ephID to advertiser
-		advBuilder.addServiceData(new ParcelUuid(SERVICE_UUID), getAdvertiseData());
+		advBuilder.addServiceData(new ParcelUuid(SERVICE_UUID), c);
+
 		mLeAdvertiser.startAdvertising(settings, advBuilder.build(), advertiseCallback);
 		Logger.d(TAG, "started advertising (only advertiseData), advertiseMode " + settings.getMode() + " powerLevel " +
 				settings.getTxPowerLevel());
