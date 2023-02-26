@@ -1,4 +1,6 @@
 package org.dpppt.android.sdk.internal.crypto;
+import org.dpppt.android.sdk.internal.util.DayDate;
+
 import java.nio.ByteBuffer;
 
 import java.security.MessageDigest;
@@ -25,10 +27,11 @@ public class EphemeralIdGenerator {
     private static final Random RANDOM = new Random();
 
     public static byte[] generateEphemeralId(String input) {
-        long id = generateRandomId();
+        /*long id = generateRandomId();
         ID_TO_STRING_MAP.put(id, input);
         STRING_TO_ID_MAP.put(input, id);
-        return ByteBuffer.allocate(8).putLong(id).array();
+        return ByteBuffer.allocate(8).putLong(id).array();*/
+        return input.getBytes();
     }
 
     public static String reverseEphemeralId(byte[] idBytes) {
@@ -41,6 +44,25 @@ public class EphemeralIdGenerator {
         RANDOM.nextBytes(bytes);
         byte[] hash = MESSAGE_DIGEST.digest(bytes);
         return ByteBuffer.wrap(hash).getLong();
+    }
+
+    // Helps with server restarts and reschedules
+    private static final int NUMBER_OF_EPOCHS_PER_DAY = 24 * 4;
+    public static final int MILLISECONDS_PER_EPOCH = 24 * 60 * 60 * 1000 / NUMBER_OF_EPOCHS_PER_DAY;
+
+    private static int getEpochCounter(long time) {
+        DayDate day = new DayDate(time);
+        return (int) (time - day.getStartOfDayTimestamp()) / MILLISECONDS_PER_EPOCH;
+    }
+
+    public static long getCurrentEpochStart() {
+        long now = System.currentTimeMillis();
+        return getEpochStart(now);
+    }
+
+    public static long getEpochStart(long time) {
+        DayDate currentDay = new DayDate(time);
+        return currentDay.getStartOfDayTimestamp() + getEpochCounter(time) * MILLISECONDS_PER_EPOCH;
     }
 }
 

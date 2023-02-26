@@ -3,25 +3,17 @@ package org.dpppt.android.sdk;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-
 import androidx.core.content.ContextCompat;
 import java.security.PublicKey;
 import java.util.Collection;
-
-
-
 import org.dpppt.android.sdk.internal.AppConfigManager;
 import org.dpppt.android.sdk.internal.BroadcastHelper;
 import org.dpppt.android.sdk.internal.ErrorHelper;
-
 import org.dpppt.android.sdk.internal.TracingService;
-
-import org.dpppt.android.sdk.internal.crypto.CryptoModule;
 import org.dpppt.android.sdk.internal.database.Database;
-
 import org.dpppt.android.sdk.internal.logger.Logger;
-
 import org.dpppt.android.sdk.internal.util.ProcessUtil;
+
 // Adapted DP3T structure and code
 public class Messaging {
 
@@ -40,8 +32,6 @@ public class Messaging {
 
 
 	private static void executeInit(Context context, PublicKey signaturePublicKey) {
-		//TODO: Reverse comment if needed
-		//CryptoModule.getInstance(context).init();
 		new Database(context).removeOldData();
 		AppConfigManager appConfigManager = AppConfigManager.getInstance(context);
 		boolean advertising = appConfigManager.isAdvertisingEnabled();
@@ -79,10 +69,9 @@ public class Messaging {
 
 	public static TracingStatus getStatus(Context context) {
 		checkInit();
-		Database database = new Database(context);
+		//Database database = new Database(context);
 		AppConfigManager appConfigManager = AppConfigManager.getInstance(context);
 		Collection<TracingStatus.ErrorState> errorStates = ErrorHelper.checkTracingErrorStatus(context);
-		// TODO: Remove contacts
 		return new TracingStatus(
 				appConfigManager.isAdvertisingEnabled(),
 				appConfigManager.isReceivingEnabled(),
@@ -113,8 +102,6 @@ public class Messaging {
 		if (appConfigManager.isAdvertisingEnabled() || appConfigManager.isReceivingEnabled()) {
 			throw new IllegalStateException("Tracking must be stopped for clearing the local data");
 		}
-		//TODO: Reverse comment if needed
-		//CryptoModule.getInstance(context).reset();
 		appConfigManager.clearPreferences();
 		Logger.clear();
 		Database db = new Database(context);

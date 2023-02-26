@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 import org.dpppt.android.sdk.internal.BroadcastHelper;
 
-import org.dpppt.android.sdk.internal.crypto.CryptoModule;
 import org.dpppt.android.sdk.internal.crypto.EphId;
 
 

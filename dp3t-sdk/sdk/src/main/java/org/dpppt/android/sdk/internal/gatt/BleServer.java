@@ -9,18 +9,16 @@ import android.bluetooth.le.BluetoothLeAdvertiser;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.ParcelUuid;
+import android.widget.TextView;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.UUID;
 
+import org.dpppt.android.sdk.R;
 import org.dpppt.android.sdk.internal.AppConfigManager;
-import org.dpppt.android.sdk.internal.crypto.CryptoModule;
-import org.dpppt.android.sdk.internal.crypto.EphId;
 import org.dpppt.android.sdk.internal.crypto.EphemeralIdGenerator;
 import org.dpppt.android.sdk.internal.logger.Logger;
 
@@ -60,12 +58,9 @@ public class BleServer {
 	}
 
 	private byte[] getAdvertiseData() {
-		//CryptoModule cryptoModule = CryptoModule.getInstance(context);
-		// Get current EphId based on epoch
 
-		byte[] advertiseData = EphemeralIdGenerator.generateEphemeralId("Tim");
-		//byte[] advertiseData = cryptoModule.getCurrentEphId().getData();
-
+		AppConfigManager appConfigManager = AppConfigManager.getInstance(context);
+		byte[] advertiseData = EphemeralIdGenerator.generateEphemeralId(appConfigManager.name);
 		return advertiseData;
 	}
 
@@ -101,19 +96,20 @@ public class BleServer {
 		AppConfigManager appConfigManager = AppConfigManager.getInstance(context);
 		String zipcoders = appConfigManager.zippy;
 		byte[] byte_zip = zipcoders.getBytes(StandardCharsets.UTF_8);
-
+		byte[] data = getAdvertiseData();
 
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 		try {
-			outputStream.write(getAdvertiseData());
 			outputStream.write(byte_zip);
+			outputStream.write(data);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		byte[] c = outputStream.toByteArray();
+		byte[] adv_data = outputStream.toByteArray();
+
 
 		// binding ephID to advertiser
-		advBuilder.addServiceData(new ParcelUuid(SERVICE_UUID), c);
+		advBuilder.addServiceData(new ParcelUuid(SERVICE_UUID), adv_data);
 
 		mLeAdvertiser.startAdvertising(settings, advBuilder.build(), advertiseCallback);
 		Logger.d(TAG, "started advertising (only advertiseData), advertiseMode " + settings.getMode() + " powerLevel " +

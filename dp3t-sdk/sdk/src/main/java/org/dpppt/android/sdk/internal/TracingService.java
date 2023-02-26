@@ -20,7 +20,7 @@ import java.util.Collection;
 import org.dpppt.android.sdk.Messaging;
 import org.dpppt.android.sdk.R;
 import org.dpppt.android.sdk.TracingStatus;
-import org.dpppt.android.sdk.internal.crypto.CryptoModule;
+import org.dpppt.android.sdk.internal.crypto.EphemeralIdGenerator;
 import org.dpppt.android.sdk.internal.gatt.BleClient;
 import org.dpppt.android.sdk.internal.gatt.BleServer;
 import org.dpppt.android.sdk.internal.gatt.BluetoothServiceStatus;
@@ -274,7 +274,7 @@ public class TracingService extends Service {
 	}
 
 	public static void scheduleNextServerRestart(Context context) {
-		long nextEpochStart = CryptoModule.getInstance(context).getCurrentEpochStart() + CryptoModule.MILLISECONDS_PER_EPOCH;
+		long nextEpochStart = EphemeralIdGenerator.getCurrentEpochStart() + EphemeralIdGenerator.MILLISECONDS_PER_EPOCH;
 		long nextAdvertiseChange = nextEpochStart;
 		String calibrationTestDeviceName = AppConfigManager.getInstance(context).getCalibrationTestDeviceName();
 		if (calibrationTestDeviceName != null) {

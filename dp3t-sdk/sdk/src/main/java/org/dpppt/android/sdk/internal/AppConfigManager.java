@@ -23,8 +23,6 @@ public class AppConfigManager {
 		return instance;
 	}
 
-	public static final int CALIBRATION_TEST_DEVICE_NAME_LENGTH = 4;
-
 	public static final long DEFAULT_SCAN_INTERVAL = 1 * 60 * 1000L;
 	public static final long DEFAULT_SCAN_DURATION = 20 * 1000L;
 	private static final BluetoothScanMode DEFAULT_BLUETOOTH_SCAN_MODE = BluetoothScanMode.SCAN_MODE_LOW_POWER;
@@ -98,13 +96,14 @@ public class AppConfigManager {
 		sharedPrefs.edit().clear().apply();
 	}
 
-	public String zippy = "lmao";
+	public String zippy = "91950";
 	public void setZip(String zip) {
 		this.zippy = zip;
 	}
 
-
-	// TODO: use sharedpref to store seed/sk (only using 1 now,
-	//  no need to generate seed each day as of February 1)
+	public String name = "Name";
+	public void setName(String name) {
+		this.name = name;
+	}
 
 }

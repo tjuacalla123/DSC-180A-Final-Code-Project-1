@@ -1,12 +1,3 @@
-/*
- * Copyright (c) 2020 Ubique Innovation AG <https://www.ubique.ch>
- *
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * SPDX-License-Identifier: MPL-2.0
- */
 package org.dpppt.android.sdk.internal.gatt;
 
 import android.bluetooth.BluetoothAdapter;
@@ -19,7 +10,13 @@ import android.bluetooth.le.ScanSettings;
 import android.content.Context;
 import android.os.Build;
 import android.os.ParcelUuid;
+import android.util.Log;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -28,14 +25,18 @@ import java.util.Map;
 
 import org.dpppt.android.sdk.internal.AppConfigManager;
 import org.dpppt.android.sdk.internal.BroadcastHelper;
-import org.dpppt.android.sdk.internal.crypto.CryptoModule;
 import org.dpppt.android.sdk.internal.crypto.EphId;
+
 import org.dpppt.android.sdk.internal.database.Database;
 import org.dpppt.android.sdk.internal.database.models.Handshake;
 import org.dpppt.android.sdk.internal.logger.Logger;
 
+import org.json.JSONArray;
+
+import org.json.JSONObject;
+
 import static org.dpppt.android.sdk.internal.gatt.BleServer.SERVICE_UUID;
-//import static org.dpppt.android.sdk.internal.gatt.BleServer.SERVICE_UUID2;
+
 
 public class BleClient {
 
@@ -44,20 +45,16 @@ public class BleClient {
 	private final Context context;
 	private BluetoothLeScanner bleScanner;
 	private ScanCallback bleScanCallback;
-	private GattConnectionThread gattConnectionThread;
 
 	private HashMap<String, List<Handshake>> scanResultMap = new HashMap<>();
-	private HashMap<String, EphId> connectedEphIdMap = new HashMap<>();
+	private ArrayList<byte[]> diff_location_ephid = new ArrayList<>();
 
 	// constructor
-	public BleClient(Context context) {
-		this.context = context;
-		//gattConnectionThread = new GattConnectionThread();
-		//gattConnectionThread.start();
-	}
+	public BleClient(Context context) {this.context = context;}
 
 	public BluetoothState start() {
 		final BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
 		// check for bluetooth
 		if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled()) {
 			BroadcastHelper.sendErrorUpdateBroadcast(context);
@@ -81,6 +78,7 @@ public class BleClient {
 		scanFilters.add(new ScanFilter.Builder()
 				.setManufacturerData(0x004c, new byte[0])
 				.build());
+
 		// Settings for bluetooth scan
 		ScanSettings.Builder settingsBuilder = new ScanSettings.Builder()
 				.setScanMode(AppConfigManager.getInstance(context).getBluetoothScanMode().getSystemValue())
@@ -153,14 +151,40 @@ public class BleClient {
 					"; haspayload: " + correctPayload);
 			if (payload != null) {
 
-				byte[] ephID = Arrays.copyOfRange(payload, 0, 8);
-				byte[] zip_byte = Arrays.copyOfRange(payload, 8, payload.length);
+				byte[] ephID = Arrays.copyOfRange(payload, 5, payload.length);
+				byte[] zip_byte = Arrays.copyOfRange(payload, 0, 5);
 				String zip = new String(zip_byte, "UTF-8");
+				String name = new String(ephID, "UTF-8");
+
 				System.out.println(zip);
-				System.out.println(ephID);
-				// if Android, optimize (meaning: send/read payload directly in the advertisement
+				System.out.println(name);
+
+				AppConfigManager appConfigManager = AppConfigManager.getInstance(context);
+				String zipcoders = appConfigManager.zippy;
+
+
+				System.out.println(diff_location_ephid.size());
+
+				if (zipcoders != zip) {
+
+				}
+				// no duplicate ids in list
+				Boolean notInLst = true;
+				for (byte[] i : diff_location_ephid) {
+					String id = new String(i, "UTF-8");
+					System.out.println(id + " " + name + " lol");
+					System.out.println(id.equals(name));
+					if (id.equals(name)) {
+						notInLst = false;
+						break;
+					}
+				}
+				if (notInLst) {diff_location_ephid.add(ephID);}
+
 				Logger.i(TAG, "handshake with " + deviceAddr + " (servicedata payload)");
 				handshakesForDevice.add(createHandshake(new EphId(payload), scanResult, power));
+
+
 			}
 
 		} catch (Exception e) {
@@ -173,6 +197,7 @@ public class BleClient {
 				BleCompat.getPrimaryPhy(scanResult), BleCompat.getSecondaryPhy(scanResult),
 				scanResult.getTimestampNanos());
 	}
+
 	// stop within intervals or manual
 	public synchronized void stopScan() {
 		final BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -189,28 +214,94 @@ public class BleClient {
 	}
 
 	public synchronized void stop() {
-		//gattConnectionThread.terminate();
 		stopScan();
-
 		Database database = new Database(context);
 		for (Map.Entry<String, List<Handshake>> entry : scanResultMap.entrySet()) {
 			String device = entry.getKey();
 			List<Handshake> handshakes = scanResultMap.get(device);
-			// merges ephid's with devices (no duplicates)
-			if (connectedEphIdMap.containsKey(device)) {
-				EphId ephId = connectedEphIdMap.get(device);
-				for (Handshake handshake : handshakes) {
-					handshake.setEphId(ephId);
+			for (Handshake handshake : handshakes) {
+				if (handshake.getEphId() != null) {
 					database.addHandshake(context, handshake);
-				}
-			} else {
-				for (Handshake handshake : handshakes) {
-					if (handshake.getEphId() != null) {
-						database.addHandshake(context, handshake);
-					}
 				}
 			}
 		}
+
+
+
+
+
+		Thread thread = new Thread(new Runnable() {
+			@Override
+			public void run() {
+					try {
+						// converting data for posting
+						JSONArray spotted = new JSONArray();
+						for (byte[] i : diff_location_ephid) {spotted.put(i);}
+						AppConfigManager appConfigManager = AppConfigManager.getInstance(context);
+						JSONObject jObj = new JSONObject();
+						jObj.put("from_user", appConfigManager.name);
+						jObj.put("spotted_users", spotted);
+						String jsonStr = jObj.toString();
+						System.out.println(jsonStr);
+						// ["id1","id2"]
+						// "id1, id2"
+						////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+						// id json
+						JSONObject jID = new JSONObject();
+						jID.put("userID", appConfigManager.name);
+						String jIDStr = jID.toString();
+
+						////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+						//// Adding ID to server
+						URL url_id = new URL("https://dsc180-decentralized-location.herokuapp.com/locationConsensus/users/");
+						HttpURLConnection con = (HttpURLConnection) url_id.openConnection();
+						con.setRequestMethod("POST");
+						// JSON format data
+						con.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+						// Set the request body with the JSON data
+						byte[] postID = jIDStr.getBytes("UTF-8");
+						con.setDoOutput(true);
+						OutputStream outputStream = con.getOutputStream();
+						outputStream.write(postID);outputStream.flush();outputStream.close();
+						// Response from the server
+						BufferedReader reader = new BufferedReader(new InputStreamReader(con.getInputStream()));
+						String line;
+						StringBuilder response = new StringBuilder();
+						while ((line = reader.readLine()) != null) {response.append(line);}
+						reader.close();
+						Log.d("POST Response ID", response.toString());
+
+						////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+						//// Adding interactions to server
+						URL url = new URL("https://dsc180-decentralized-location.herokuapp.com/locationConsensus/interactions/");
+						HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+						connection.setRequestMethod("POST");
+						// JSON format data
+						connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+						// Set the request body with the JSON data
+						//String json = "{\"from_user\":\"1\",\"spotted_users\":\"Andrew, Martin\"}";
+						byte[] postData = jsonStr.getBytes("UTF-8");
+						connection.setDoOutput(true);
+						OutputStream outputStream1 = connection.getOutputStream();
+						outputStream1.write(postData);outputStream1.flush();outputStream1.close();
+						//System.out.println("code:"+connection.getResponseCode());
+						// Response from the server
+						BufferedReader reader1 = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+						String line1;
+						StringBuilder response1 = new StringBuilder();
+						while ((line1 = reader1.readLine()) != null) {response.append(line1);}
+						reader1.close();
+						Log.d("POST Response interactions", response1.toString());
+
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+			}
+		});
+		thread.start();
 	}
 
 }
