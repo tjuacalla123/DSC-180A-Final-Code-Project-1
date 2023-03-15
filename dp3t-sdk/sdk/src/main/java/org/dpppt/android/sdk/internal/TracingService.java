@@ -1,21 +1,32 @@
 package org.dpppt.android.sdk.internal;
 
+import android.Manifest;
 import android.app.*;
 import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 
+import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
+import java.util.Locale;
 
 import org.dpppt.android.sdk.Messaging;
 import org.dpppt.android.sdk.R;
@@ -89,10 +100,16 @@ public class TracingService extends Service {
 
 	private boolean startAdvertising;
 	private boolean startReceiving;
+
 	private long scanInterval;
 	private long scanDuration;
 
+
 	private boolean isFinishing;
+
+	private LocationManager locationManager;
+
+	private LocationListener locationListener;
 
 	public TracingService() { }
 
@@ -100,6 +117,44 @@ public class TracingService extends Service {
 	@Override
 	public void onCreate() {
 		super.onCreate();
+		AppConfigManager appConfigManager = AppConfigManager.getInstance(getApplicationContext());
+		locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+		locationListener = new LocationListener() {
+			public void onLocationChanged(Location location) {
+				// Get the zipcode from the location
+				Geocoder geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
+				List<Address> addresses;
+				try {
+					addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
+					if (addresses != null && addresses.size() > 0) {
+						String zipcode = addresses.get(0).getPostalCode();
+
+						if (appConfigManager.getName() != null) {
+							if (appConfigManager.getName().equals("andrew")) {
+								appConfigManager.setZip("91950");
+							} else {
+								appConfigManager.setZip(zipcode);
+							}
+						} else {
+							appConfigManager.setZip(zipcode);
+
+						}
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+
+			public void onStatusChanged(String provider, int status, Bundle extras) {
+			}
+
+			public void onProviderEnabled(String provider) {
+			}
+
+			public void onProviderDisabled(String provider) {
+			}
+		};
+		checkZip1(locationManager, locationListener);
 
 		isFinishing = false;
 
@@ -213,7 +268,6 @@ public class TracingService extends Service {
 		if (isFinishing) {
 			return;
 		}
-
 		Notification notification = createForegroundNotification();
 		NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		mNotificationManager.notify(NOTIFICATION_ID, notification);
@@ -224,7 +278,6 @@ public class TracingService extends Service {
 			handler.removeCallbacksAndMessages(null);
 		}
 		handler = new Handler();
-
 		invalidateForegroundNotification();
 		restartClient();
 		restartServer();
@@ -238,7 +291,6 @@ public class TracingService extends Service {
 	}
 
 	private void restartClient() {
-		//also restart server here to generate a new mac-address so we get rediscovered by apple devices
 		startServer();
 
 		BluetoothState bluetoothState = startClient();
@@ -259,10 +311,10 @@ public class TracingService extends Service {
 			Logger.e(TAG, "bluetooth not supported");
 			return;
 		}
-
 		scheduleNextServerRestart(this);
 	}
 
+	// Needs to be every hour for majority rules algorithm to work (in accordance to server team's website)
 	public static void scheduleNextClientRestart(Context context, long scanInterval) {
 		long now = System.currentTimeMillis();
 		long delay = scanInterval - (now % scanInterval);
@@ -274,13 +326,8 @@ public class TracingService extends Service {
 	}
 
 	public static void scheduleNextServerRestart(Context context) {
-		long nextEpochStart = EphemeralIdGenerator.getCurrentEpochStart() + EphemeralIdGenerator.MILLISECONDS_PER_EPOCH;
-		long nextAdvertiseChange = nextEpochStart;
-		String calibrationTestDeviceName = AppConfigManager.getInstance(context).getCalibrationTestDeviceName();
-		if (calibrationTestDeviceName != null) {
-			long now = System.currentTimeMillis();
-			nextAdvertiseChange = now - (now % (60 * 1000)) + 60 * 1000;
-		}
+		long now = System.currentTimeMillis();
+		long nextAdvertiseChange = now - (now % (60 * 1000)) + 5 * 1000;
 		AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
 		Intent intent = new Intent(context, TracingServiceBroadcastReceiver.class);
 		intent.setAction(ACTION_RESTART_SERVER);
@@ -302,8 +349,6 @@ public class TracingService extends Service {
 		stopServer();
 		if (startAdvertising) {
 			bleServer = new BleServer(this);
-
-			Logger.d(TAG, "startAdvertising");
 			BluetoothState advertiserState = bleServer.startAdvertising();
 			return advertiserState;
 		}
@@ -349,14 +394,25 @@ public class TracingService extends Service {
 	@Override
 	public void onDestroy() {
 		Logger.i(TAG, "onDestroy()");
-
+		locationManager.removeUpdates(locationListener);
 		unregisterReceiver(errorsUpdateReceiver);
 		unregisterReceiver(bluetoothStateChangeReceiver);
 		unregisterReceiver(locationServiceStateChangeReceiver);
-
 		if (handler != null) {
 			handler.removeCallbacksAndMessages(null);
 		}
+	}
+
+	public void checkZip1(LocationManager locationManager, LocationListener locationListener) {
+		int updateTime = 200; // 2 seconds
+		int distanceChange = 0; // will update every 2 seconds without any need for location to change
+
+		// for some reason Android Studio wants to put this so it doesn't crash?
+		if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+		}
+
+		// where zip code is updated
+		locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, updateTime, distanceChange, locationListener);
 	}
 
 }

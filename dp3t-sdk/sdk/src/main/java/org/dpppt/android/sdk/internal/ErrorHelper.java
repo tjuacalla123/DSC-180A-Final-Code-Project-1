@@ -1,12 +1,3 @@
-/*
- * Copyright (c) 2020 Ubique Innovation AG <https://www.ubique.ch>
- *
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * SPDX-License-Identifier: MPL-2.0
- */
 package org.dpppt.android.sdk.internal;
 
 import android.Manifest;
@@ -26,9 +17,6 @@ import org.dpppt.android.sdk.TracingStatus.ErrorState;
 import org.dpppt.android.sdk.internal.gatt.BluetoothServiceStatus;
 
 public class ErrorHelper {
-
-	private static final String TAG = "ErrorHelper";
-
 	public static Collection<ErrorState> checkTracingErrorStatus(Context context) {
 		Set<ErrorState> errors = new HashSet<>();
 

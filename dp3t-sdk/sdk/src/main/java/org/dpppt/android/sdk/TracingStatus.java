@@ -2,22 +2,15 @@ package org.dpppt.android.sdk;
 
 import java.util.Collection;
 
-
-
 public class TracingStatus {
-
 	private boolean advertising;
 	private boolean receiving;
-	private long lastSyncDate;
-
-
 	private Collection<ErrorState> errors;
 
 	public TracingStatus(boolean advertising, boolean receiving,
-			long lastSyncDate, Collection<ErrorState> errors) {
+			Collection<ErrorState> errors) {
 		this.advertising = advertising;
 		this.receiving = receiving;
-		this.lastSyncDate = lastSyncDate;
 		this.errors = errors;
 	}
 

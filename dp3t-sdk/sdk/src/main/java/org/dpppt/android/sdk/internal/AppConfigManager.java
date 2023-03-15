@@ -1,19 +1,9 @@
-/*
- * Copyright (c) 2020 Ubique Innovation AG <https://www.ubique.ch>
- *
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * SPDX-License-Identifier: MPL-2.0
- */
 package org.dpppt.android.sdk.internal;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 
 public class AppConfigManager {
-
 	private static AppConfigManager instance;
 
 	public static synchronized AppConfigManager getInstance(Context context) {
@@ -22,38 +12,19 @@ public class AppConfigManager {
 		}
 		return instance;
 	}
-
+	// 1 minute break between scanning
 	public static final long DEFAULT_SCAN_INTERVAL = 1 * 60 * 1000L;
-	public static final long DEFAULT_SCAN_DURATION = 20 * 1000L;
-	private static final BluetoothScanMode DEFAULT_BLUETOOTH_SCAN_MODE = BluetoothScanMode.SCAN_MODE_LOW_POWER;
-
-
-
-
+	// 1 hour scan duration, to match server team's blacklist update
+	public static final long DEFAULT_SCAN_DURATION = 60 * 60 * 1000L;
 	private static final String PREFS_NAME = "dp3t_sdk_preferences";
-
 	private static final String PREF_ADVERTISING_ENABLED = "advertisingEnabled";
 	private static final String PREF_RECEIVING_ENABLED = "receivingEnabled";
-	private static final String PREF_LAST_SYNC_DATE = "lastSyncDate";
-
-	private static final String PREF_CALIBRATION_TEST_DEVICE_NAME = "calibrationTestDeviceName";
-	private static final String PREF_SCAN_INTERVAL = "scanInterval";
-	private static final String PREF_SCAN_DURATION = "scanDuration";
-	private static final String PREF_BLUETOOTH_SCAN_MODE = "scanMode";
-
-	private String appId;
-
 
 	private SharedPreferences sharedPrefs;
 
 	private AppConfigManager(Context context) {
 		sharedPrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
 	}
-
-	public void setAppId(String appId) {
-		this.appId = appId;
-	}
-
 
 	public void setAdvertisingEnabled(boolean enabled) {
 		sharedPrefs.edit().putBoolean(PREF_ADVERTISING_ENABLED, enabled).apply();
@@ -71,39 +42,51 @@ public class AppConfigManager {
 		return sharedPrefs.getBoolean(PREF_RECEIVING_ENABLED, false);
 	}
 
-	public long getLastSyncDate() {
-		return sharedPrefs.getLong(PREF_LAST_SYNC_DATE, 0);
-	}
-
-
-	public String getCalibrationTestDeviceName() {
-		return sharedPrefs.getString(PREF_CALIBRATION_TEST_DEVICE_NAME, null);
-	}
-
-	public long getScanDuration() {
-		return sharedPrefs.getLong(PREF_SCAN_DURATION, DEFAULT_SCAN_DURATION);
-	}
-
-	public long getScanInterval() {
-		return sharedPrefs.getLong(PREF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL);
-	}
-
-	public BluetoothScanMode getBluetoothScanMode() {
-		return BluetoothScanMode.values()[sharedPrefs.getInt(PREF_BLUETOOTH_SCAN_MODE, DEFAULT_BLUETOOTH_SCAN_MODE.ordinal())];
-	}
-
 	public void clearPreferences() {
 		sharedPrefs.edit().clear().apply();
 	}
 
-	public String zippy = "91950";
 	public void setZip(String zip) {
-		this.zippy = zip;
+		sharedPrefs.edit().putString("Zip code", zip).apply();
+	}
+	public String getZip() {
+		return sharedPrefs.getString("Zip code", "00000");
 	}
 
-	public String name = "Name";
+	public String name = "Default";
 	public void setName(String name) {
 		this.name = name;
 	}
 
+	public void setID(String id) {
+		sharedPrefs.edit().putString("Ephemeral ID", id).apply();
+	}
+
+	public String getID() {
+		return sharedPrefs.getString("Ephemeral ID", null);
+	}
+
+	public void setNameShare(String name) {
+		sharedPrefs.edit().putString("Name_eph_id", name).apply();
+	}
+
+	public String getName() {
+		return sharedPrefs.getString("Name_eph_id", null);
+	}
+
+    public boolean getBlacklist() {
+		return sharedPrefs.getBoolean("blacklist", false);
+    }
+
+	public void setBlacklist(boolean b) {
+		sharedPrefs.edit().putBoolean("blacklist", b).apply();
+	}
+
+	public boolean getlocation() {
+		return sharedPrefs.getBoolean("location-permission", false);
+	}
+
+	public void setlocation(boolean b) {
+		sharedPrefs.edit().putBoolean("location-permission", b).apply();
+	}
 }

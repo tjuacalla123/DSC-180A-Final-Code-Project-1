@@ -9,7 +9,6 @@ import android.bluetooth.le.BluetoothLeAdvertiser;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.ParcelUuid;
-import android.widget.TextView;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -17,22 +16,17 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
-import org.dpppt.android.sdk.R;
 import org.dpppt.android.sdk.internal.AppConfigManager;
 import org.dpppt.android.sdk.internal.crypto.EphemeralIdGenerator;
 import org.dpppt.android.sdk.internal.logger.Logger;
 
 public class BleServer {
-
 	private static final String TAG = "BleServer";
 
+	//part of uuid
 	private static final String DP3T_16_BIT_UUID = "FD68";
-
 	// For scanning other bluetooth devices with same UUID
 	public static final UUID SERVICE_UUID = UUID.fromString("0000" + DP3T_16_BIT_UUID + "-0000-1000-8000-00805F9B34FB");
-	//public static final UUID SERVICE_UUID2 = UUID.fromString("0000180A-0000-1000-8000-00805F9B34FB");
-	// For gatt characteristic
-	public static final UUID TOTP_CHARACTERISTIC_UUID = UUID.fromString("8c8494e3-bab5-1848-40a0-1b06991c0001");
 
 	private final Context context;
 
@@ -58,9 +52,7 @@ public class BleServer {
 	}
 
 	private byte[] getAdvertiseData() {
-
-		AppConfigManager appConfigManager = AppConfigManager.getInstance(context);
-		byte[] advertiseData = EphemeralIdGenerator.generateEphemeralId(appConfigManager.name);
+		byte[] advertiseData = EphemeralIdGenerator.generateEphemeralId(context);
 		return advertiseData;
 	}
 
@@ -78,8 +70,6 @@ public class BleServer {
 			return BluetoothState.NOT_SUPPORTED;
 		}
 
-		// How advertising will occur (We configured it to be ADVERTISE_MODE_BALANCED
-		// and ADVERTISE_TX_POWER_ULTRA_LOW respectively
 		AdvertiseSettings.Builder settingBuilder = new AdvertiseSettings.Builder();
 		settingBuilder.setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_BALANCED);
 		settingBuilder.setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_ULTRA_LOW);
@@ -94,10 +84,11 @@ public class BleServer {
 		advBuilder.addServiceUuid(new ParcelUuid(SERVICE_UUID));
 
 		AppConfigManager appConfigManager = AppConfigManager.getInstance(context);
-		String zipcoders = appConfigManager.zippy;
+		String zipcoders = appConfigManager.getZip();
 		byte[] byte_zip = zipcoders.getBytes(StandardCharsets.UTF_8);
 		byte[] data = getAdvertiseData();
 
+		// create the payload
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 		try {
 			outputStream.write(byte_zip);
@@ -107,14 +98,11 @@ public class BleServer {
 		}
 		byte[] adv_data = outputStream.toByteArray();
 
-
 		// binding ephID to advertiser
 		advBuilder.addServiceData(new ParcelUuid(SERVICE_UUID), adv_data);
 
 		mLeAdvertiser.startAdvertising(settings, advBuilder.build(), advertiseCallback);
-		Logger.d(TAG, "started advertising (only advertiseData), advertiseMode " + settings.getMode() + " powerLevel " +
-				settings.getTxPowerLevel());
-
+		Logger.d(TAG, "started advertising.");
 		return BluetoothState.ENABLED;
 	}
 
@@ -130,5 +118,4 @@ public class BleServer {
 		stopAdvertising();
 		mAdapter = null;
 	}
-
 }

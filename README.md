@@ -1,4 +1,4 @@
-# DSC 180A Project Code 
+# DSC 180B Project Code - Proxensus
 Group Members:
 Frans Timothy Juacalla,
 Andrew Canonigo,
@@ -12,6 +12,6 @@ DP3T SDK
 https://github.com/DP-3T/dp3t-sdk-android
 
 ### How to run project
-To Run the project in Android Studio, Please open the 'calibration-app' instead of the entire project. The project needs at least 2 Android smartphones with working Bluetooth.
+To Run the project in Android Studio, Please open the 'calibration-app' instead of the entire project. The project needs at least 3 Android smartphones with working Bluetooth.
 
-Demonstration Video: https://www.youtube.com/watch?v=FI5uIs8SXgg
+Demonstration Video: https://youtu.be/stuOTvUJUmk
